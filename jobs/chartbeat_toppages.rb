@@ -1,15 +1,15 @@
 require 'net/http'
 require 'json'
 
-chartbeat_apikey = '--- YOUR APIKEY HERE ---'
-chartbeat_host   = '--- YOUR  HOST  HERE ---'
-
-url_toppages = '/live/toppages/v3/?apikey=%s&host=%s' % [chartbeat_apikey, chartbeat_host]
-
-http = Net::HTTP.new('api.chartbeat.com')
-
 SCHEDULER.every '1m', :first_in => 0 do
-  response = http.request(Net::HTTP::Get.new(url_toppages))
+  if not defined? settings.chartbeat_apikey? or not defined? settings.chartbeat_host
+    next
+  end
+
+  http = Net::HTTP.new('api.chartbeat.com')
+  url  = '/live/toppages/v3/?apikey=%s&host=%s' % [settings.chartbeat_apikey, settings.chartbeat_host]
+
+  response = http.request(Net::HTTP::Get.new(url))
   toppages = JSON.parse(response.body)['pages']
 
   if toppages

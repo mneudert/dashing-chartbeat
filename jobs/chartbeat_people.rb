@@ -1,23 +1,24 @@
 require 'net/http'
 require 'json'
 
-chartbeat_apikey = '--- YOUR APIKEY HERE ---'
-chartbeat_host   = '--- YOUR  HOST  HERE ---'
-
-url_quickstats = '/live/quickstats/v3/?apikey=%s&host=%s' % [chartbeat_apikey, chartbeat_host]
-people_max = 0
-
-http = Net::HTTP.new('api.chartbeat.com')
+chartbeat_people_max = 0
 
 SCHEDULER.every '30s', :first_in => 0 do
-  response = http.request(Net::HTTP::Get.new(url_quickstats))
+  if not defined? settings.chartbeat_apikey? or not defined? settings.chartbeat_host
+    next
+  end
+
+  http = Net::HTTP.new('api.chartbeat.com')
+  url  = '/live/quickstats/v3/?apikey=%s&host=%s' % [settings.chartbeat_apikey, settings.chartbeat_host]
+
+  response   = http.request(Net::HTTP::Get.new(url))
   quickstats = JSON.parse(response.body)
 
   if quickstats['people']
-    if quickstats['people'] > people_max
-      people_max = quickstats['people']
+    if quickstats['people'] > chartbeat_people_max
+      chartbeat_people_max = quickstats['people']
     end
 
-    send_event('chartbeat_people', { value: quickstats['people'], max: people_max })
+    send_event('chartbeat_people', { value: quickstats['people'], max: chartbeat_people_max })
   end
 end
