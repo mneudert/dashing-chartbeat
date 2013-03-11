@@ -1,24 +1,32 @@
 require 'net/http'
 require 'json'
 
-SCHEDULER.every '1m', :first_in => 0 do
-  if not defined? settings.chartbeat_apikey? or not defined? settings.chartbeat_host
+SCHEDULER.every '30s', :first_in => 0 do
+  if not defined? settings.chartbeat? or not settings.chartbeat.count
     next
   end
 
-  http = Net::HTTP.new('api.chartbeat.com')
-  url  = '/live/toppages/v3/?apikey=%s&host=%s' % [settings.chartbeat_apikey, settings.chartbeat_host]
+  http     = Net::HTTP.new('api.chartbeat.com')
+  toppages = {}
 
-  response = http.request(Net::HTTP::Get.new(url))
-  toppages = JSON.parse(response.body)['pages']
+  settings.chartbeat.each { |config|
+    url  = '/live/toppages/v3/?apikey=%s&host=%s' % [config['apikey'], config['host']]
 
-  if toppages
-    toppages.map! do |toppage|
-      { label: toppage['title'], value: toppage['stats']['people'] }
+    response = http.request(Net::HTTP::Get.new(url))
+    pages    = JSON.parse(response.body)['pages']
+
+    if pages
+      pages.map! do |page|
+        { label: page['title'], value: page['stats']['people'] }
+      end
+
+      pages.sort_by { |page| page['value'] }
+
+      toppages[config['host']] = { items: pages[0..5] }
     end
+  }
 
-    toppages.sort_by{ |toppage| toppage[:value] }
-
-    send_event('chartbeat_toppages', { items: toppages[0..5] })
+  if toppages.length
+    send_event('chartbeat_toppages', { toppages: toppages })
   end
 end

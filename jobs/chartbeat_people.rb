@@ -22,7 +22,7 @@ SCHEDULER.every '30s', :first_in => 0 do
         chartbeat_people_max[config['host']] = quickstats['people']
       end
 
-      people[config['host']] = {value: quickstats['people'], max: chartbeat_people_max[config['host']]}
+      people[config['host']] = { value: quickstats['people'], max: chartbeat_people_max[config['host']] }
     end
   }
 
