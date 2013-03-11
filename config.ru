@@ -1,8 +1,10 @@
 require 'dashing'
 
 configure do
-  set :chartbeat_apikey, '--- YOUR APIKEY HERE ---'
-  set :chartbeat_host,   '--- YOUR  HOST  HERE ---'
+  set :chartbeat, [
+    {'apikey' => '--- YOUR APIKEY HERE ---', 'host' => '--- YOUR HOST HERE ---'},
+    {'apikey' => '--- NEXT APIKEY HERE ---', 'host' => '--- NEXT HOST HERE ---'}
+  ]
 end
 
 map Sinatra::Application.assets_prefix do
